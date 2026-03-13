@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rekap Zakat Panitia</title>
+
+<style>
+body{
+font-family:Arial;
+padding:15px;
+background:#f2f2f2;
+}
+
+h2{
+text-align:center;
+}
+
+input,select,button{
+width:100%;
+padding:12px;
+margin-top:8px;
+font-size:16px;
+}
+
+button{
+background:#2e7d32;
+color:white;
+border:none;
+}
+
+table{
+width:100%;
+margin-top:20px;
+border-collapse:collapse;
+background:white;
+}
+
+td,th{
+border:1px solid #ddd;
+padding:8px;
+font-size:14px;
+}
+
+.hapus{
+background:red;
+color:white;
+border:none;
+padding:5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Rekap Zakat</h2>
+
+<label>Batas Jilid 1</label>
+<input type="date" id="batasJilid">
+
+<label>Jenis</label>
+<select id="jenis">
+<option>Zakat Fitrah Uang</option>
+<option>Zakat Fitrah Beras</option>
+<option>Infaq</option>
+<option>Shadaqoh</option>
+<option>Zakat Mal</option>
+<option>Fidyah</option>
+</select>
+
+<label>Jumlah</label>
+<input type="number" id="jumlah">
+
+<label>Tanggal</label>
+<input type="date" id="tanggal">
+
+<button onclick="simpan()">SIMPAN</button>
+
+<h3>Rekap</h3>
+
+<div id="rekap"></div>
+
+<button onclick="exportExcel()">EXPORT EXCEL</button>
+
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Jenis</th>
+<th>Jumlah</th>
+<th>Jilid</th>
+<th>Hapus</th>
+</tr>
+</thead>
+
+<tbody id="tabel"></tbody>
+</table>
+
+<script>
+
+let data = JSON.parse(localStorage.getItem("zakatData")) || [];
+
+function simpan(){
+
+let jenis = document.getElementById("jenis").value;
+let jumlah = document.getElementById("jumlah").value;
+let tanggal = document.getElementById("tanggal").value;
+let batas = document.getElementById("batasJilid").value;
+
+if(!jumlah || !tanggal){
+alert("Isi jumlah dan tanggal");
+return;
+}
+
+let jilid = (tanggal <= batas) ? "1" : "2";
+
+data.push({
+tanggal: tanggal,
+jenis: jenis,
+jumlah: Number(jumlah),
+jilid: jilid
+});
+
+localStorage.setItem("zakatData",JSON.stringify(data));
+
+render();
+
+}
+
+function hapus(index){
+
+data.splice(index,1);
+localStorage.setItem("zakatData",JSON.stringify(data));
+render();
+
+}
+
+function render(){
+
+let tabel = "";
+let totalBeras=0;
+let totalUang=0;
+let totalInfaq=0;
+let totalShadaqoh=0;
+let totalMal=0;
+let totalFidyah=0;
+
+let jilid1=0;
+let jilid2=0;
+
+data.forEach((d,i)=>{
+
+tabel += `
+<tr>
+<td>${d.tanggal}</td>
+<td>${d.jenis}</td>
+<td>${d.jumlah}</td>
+<td>${d.jilid}</td>
+<td><button class="hapus" onclick="hapus(${i})">X</button></td>
+</tr>
+`;
+
+if(d.jenis=="Zakat Fitrah Beras") totalBeras+=d.jumlah;
+if(d.jenis=="Zakat Fitrah Uang") totalUang+=d.jumlah;
+if(d.jenis=="Infaq") totalInfaq+=d.jumlah;
+if(d.jenis=="Shadaqoh") totalShadaqoh+=d.jumlah;
+if(d.jenis=="Zakat Mal") totalMal+=d.jumlah;
+if(d.jenis=="Fidyah") totalFidyah+=d.jumlah;
+
+if(d.jilid=="1") jilid1+=d.jumlah;
+if(d.jilid=="2") jilid2+=d.jumlah;
+
+});
+
+document.getElementById("tabel").innerHTML=tabel;
+
+document.getElementById("rekap").innerHTML=`
+Beras : ${totalBeras} Kg <br>
+Zakat Fitrah Uang : Rp ${totalUang} <br>
+Infaq : Rp ${totalInfaq} <br>
+Shadaqoh : Rp ${totalShadaqoh} <br>
+Zakat Mal : Rp ${totalMal} <br>
+Fidyah : Rp ${totalFidyah} <br><br>
+
+Jilid 1 : ${jilid1} <br>
+Jilid 2 : ${jilid2}
+`;
+
+}
+
+function exportExcel(){
+
+let csv = "Tanggal,Jenis,Jumlah,Jilid\n";
+
+data.forEach(d=>{
+csv += `${d.tanggal},${d.jenis},${d.jumlah},${d.jilid}\n`;
+});
+
+let blob = new Blob([csv], { type: 'text/csv' });
+
+let link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "rekap_zakat.csv";
+link.click();
+
+}
+
+render();
+
+</script>
+
+</body>
+</html>
