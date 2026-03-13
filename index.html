@@ -48,7 +48,7 @@ border:none;
 padding:5px;
 }
 </style>
-
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -190,20 +190,67 @@ Jilid 2 : ${jilid2}
 
 function exportExcel(){
 
-let csv = "Tanggal,Jenis,Jumlah,Jilid\n";
+let rows = [
+["Tanggal","Jenis","Jumlah","Jilid"]
+];
 
 data.forEach(d=>{
-csv += `${d.tanggal},${d.jenis},${d.jumlah},${d.jilid}\n`;
+rows.push([d.tanggal,d.jenis,d.jumlah,d.jilid]);
 });
 
-let blob = new Blob([csv], { type: 'text/csv' });
+let totalBeras=0;
+let totalUang=0;
+let totalInfaq=0;
+let totalShadaqoh=0;
+let totalMal=0;
+let totalFidyah=0;
 
-let link = document.createElement("a");
-link.href = URL.createObjectURL(blob);
-link.download = "rekap_zakat.csv";
-link.click();
+let jilid1=0;
+let jilid2=0;
+
+data.forEach(d=>{
+
+if(d.jenis=="Zakat Fitrah Beras") totalBeras+=d.jumlah;
+if(d.jenis=="Zakat Fitrah Uang") totalUang+=d.jumlah;
+if(d.jenis=="Infaq") totalInfaq+=d.jumlah;
+if(d.jenis=="Shadaqoh") totalShadaqoh+=d.jumlah;
+if(d.jenis=="Zakat Mal") totalMal+=d.jumlah;
+if(d.jenis=="Fidyah") totalFidyah+=d.jumlah;
+
+if(d.jilid=="1") jilid1+=d.jumlah;
+if(d.jilid=="2") jilid2+=d.jumlah;
+
+});
+
+let rekap = [
+["REKAP ZAKAT"],
+[],
+["Jenis","Total"],
+["Beras (Kg)",totalBeras],
+["Zakat Fitrah Uang",totalUang],
+["Infaq",totalInfaq],
+["Shadaqoh",totalShadaqoh],
+["Zakat Mal",totalMal],
+["Fidyah",totalFidyah],
+[],
+["Rekap Jilid","Total"],
+["Jilid 1",jilid1],
+["Jilid 2",jilid2]
+];
+
+let wb = XLSX.utils.book_new();
+
+let ws1 = XLSX.utils.aoa_to_sheet(rows);
+let ws2 = XLSX.utils.aoa_to_sheet(rekap);
+
+XLSX.utils.book_append_sheet(wb, ws1, "Data");
+XLSX.utils.book_append_sheet(wb, ws2, "Rekap");
+
+XLSX.writeFile(wb, "rekap_zakat.xlsx");
 
 }
+
+
 
 render();
 
